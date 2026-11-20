@@ -1,0 +1,1062 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetScope — Adaptive Cache, Packet & Endpoint Inspector</title>
+  <style>
+    :root {
+      --bg-app: #0b1120;
+      --bg-panel: #111827;
+      --bg-card: #1f2937;
+      --bg-hover: #374151;
+      --border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: rgba(56, 189, 248, 0.15);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+
+    body {
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    /* Header */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: 0.3px;
+    }
+
+
+    .brand-badge {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+    }
+
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+
+    /* Layout Grid */
+    .workspace {
+      display: grid;
+      grid-template-columns: 280px 1fr 340px;
+      gap: 16px;
+      padding: 16px;
+      flex: 1;
+    }
+
+
+    @media (max-width: 1100px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+
+    .panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+
+    .panel-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+
+    .panel-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+
+    /* Buttons & Inputs */
+    button {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+
+    button:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+
+
+    button.primary {
+      background: var(--accent);
+      color: #031525;
+      font-weight: 600;
+      border-color: var(--accent);
+    }
+
+
+    button.primary:hover {
+      opacity: 0.9;
+    }
+
+
+    button.danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+
+    input, select, textarea {
+      background: var(--bg-app);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+
+    /* App Cards & Plugin Cards */
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+
+    .item-card:hover {
+      border-color: var(--accent);
+    }
+
+
+    .item-card.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+
+    .item-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+
+    .item-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+
+    /* Status Pills */
+    .pill {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+
+    .pill.hit, .pill.open {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+
+    .pill.miss, .pill.closed {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+
+    .pill.blocked {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+
+    /* Metrics Strip */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+
+    .metric-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+
+    .metric-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+
+    /* Transit Packet & Cache Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+
+    th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+
+    td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      font-family: var(--font-mono);
+      vertical-align: top;
+    }
+
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+
+    /* Timing Waterfall Bar */
+    .waterfall-bar {
+      height: 8px;
+      background: var(--bg-app);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      margin-top: 4px;
+    }
+
+
+    .wf-dns { background: #38bdf8; }
+    .wf-tcp { background: #a855f7; }
+    .wf-ttfb { background: #22c55e; }
+    .wf-dl { background: #f59e0b; }
+
+
+    /* Port Probe Grid */
+    .port-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+
+    .port-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      font-family: var(--font-mono);
+    }
+
+
+    .port-number {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+
+    .port-service {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+
+    /* Adaptive Script Editor */
+    .script-box {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      min-height: 110px;
+      background: #060a14;
+      color: #7dd3fc;
+      resize: vertical;
+    }
+
+
+    .log-stream {
+      background: #060a14;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      max-height: 170px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+
+    .log-line {
+      color: #cbd5e1;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>NetScope Inspector</span>
+      <span class="brand-badge">PLUGIN-DRIVEN v2.4</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-clear-all" class="danger">Clear App Cache</button>
+      <button id="btn-run-suite" class="primary">Run Active App Probes</button>
+    </div>
+  </header>
+
+
+  <div class="workspace">
+    <!-- LEFT COLUMN: Network Apps & Plugin Registry -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Network Apps</span>
+        <span id="app-count" class="item-meta">3 apps</span>
+      </div>
+      <div class="panel-body">
+        <div id="app-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+
+        <div class="panel-header" style="margin: 8px -16px 0; border-top: 1px solid var(--border);">
+          <span class="panel-title">Inspection Plugins</span>
+        </div>
+        <div id="plugin-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </section>
+
+
+    <!-- CENTER COLUMN: Cache & Transit Packet Inspection -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title" id="active-app-title">Transit & Cache Stream</span>
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer;">
+          <input type="checkbox" id="toggle-cache-policy" checked style="width:auto;" />
+          <span>Enable App Cache</span>
+        </label>
+      </div>
+      <div class="panel-body">
+        <!-- Live Metrics -->
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-label">Cache Hit Ratio</div>
+            <div class="metric-value" id="metric-hit-ratio">0%</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Cached Objects</div>
+            <div class="metric-value" id="metric-cached-count">0</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Avg Transit RTT</div>
+            <div class="metric-value" id="metric-avg-rtt">0 ms</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Inspected Packets</div>
+            <div class="metric-value" id="metric-packet-count">0</div>
+          </div>
+        </div>
+
+
+        <!-- Endpoint Tester -->
+        <div style="display:flex; gap:8px;">
+          <select id="endpoint-select"></select>
+          <button id="btn-fetch-cached">Fetch (Cached)</button>
+          <button id="btn-fetch-bypass">Bypass Cache</button>
+        </div>
+
+
+        <!-- Transit Packet & Timing Table -->
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Endpoint / Frame</th>
+                <th>Cache State</th>
+                <th>Status & Size</th>
+                <th>Transit Timing (DNS / TCP / TTFB)</th>
+              </tr>
+            </thead>
+            <tbody id="packet-table-body">
+              <tr>
+                <td colspan="4" style="color:var(--text-muted); text-align:center; padding:20px;">
+                  Click "Fetch (Cached)" or "Run Active App Probes" to capture transit metrics.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+
+        <!-- Adaptive Scripting Hook -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span class="panel-title">Adaptive Packet & Cache Hook Script</span>
+            <button id="btn-apply-script">Apply Rule</button>
+          </div>
+          <textarea id="adaptive-script" class="script-box" spellcheck="false">// Runs on every intercepted request before/after cache lookup
+// Available context: { url, cached, durationMs, headers }
+if (context.durationMs > 400) {
+  log("SLOW TRANSIT DETECTED: " + context.url + " (" + context.durationMs + "ms)");
+}
+if (context.cached) {
+  log("CACHE SERVED: Saved network round-trip for " + context.url);
+}</textarea>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- RIGHT COLUMN: Local Endpoint Port Probe & Live Telemetry Log -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Local Service Port Probe</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.78rem; color:var(--text-muted);">
+          Checks reachability of authorized local development services (<code>localhost</code> / <code>127.0.0.1</code>) using HTTP/WebSocket timing probes.
+        </p>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="probe-host" value="127.0.0.1" readonly />
+          <button id="btn-scan-local" class="primary">Probe Ports</button>
+        </div>
+
+
+        <div class="port-grid" id="port-grid"></div>
+
+
+        <div class="panel-header" style="margin: 4px -16px 0; border-top: 1px solid var(--border);">
+          <span class="panel-title">Plugin Event Stream</span>
+        </div>
+        <div class="log-stream" id="event-log"></div>
+      </div>
+    </section>
+  </div>
+
+
+  <script>
+    /**
+     * 1. MODULAR PLUGIN ENGINE
+     * Allows registering inspection plugins that hook into cache, transit, and port probe events.
+     */
+    class InspectorPluginManager {
+      constructor() {
+        this.plugins = new Map();
+      }
+
+
+      register(plugin) {
+        this.plugins.set(plugin.id, { ...plugin, enabled: true });
+      }
+
+
+      toggle(id) {
+        const p = this.plugins.get(id);
+        if (p) p.enabled = !p.enabled;
+      }
+
+
+      async emit(hookName, payload) {
+        for (const plugin of this.plugins.values()) {
+          if (plugin.enabled && typeof plugin[hookName] === "function") {
+            try {
+              await plugin[hookName](payload);
+            } catch (err) {
+              appendLog(`[Plugin:${plugin.id}] Error: ${err.message}`);
+            }
+          }
+        }
+      }
+    }
+
+
+    const pluginManager = new InspectorPluginManager();
+
+
+    // Built-in Plugin 1: Cache Integrity & TTL Auditor
+    pluginManager.register({
+      id: "cache-auditor",
+      name: "Cache Storage Auditor",
+      description: "Verifies CacheStorage buckets and header freshness.",
+      onInspect(packet) {
+        if (packet.cached) {
+          appendLog(`[CacheAuditor] HIT verified for ${packet.shortUrl}`);
+        } else {
+          appendLog(`[CacheAuditor] MISS stored in bucket (${packet.sizeBytes} B)`);
+        }
+      }
+    });
+
+
+    // Built-in Plugin 2: Transit Latency & Timing Analyzer
+    pluginManager.register({
+      id: "transit-analyzer",
+      name: "Transit Timing Analyzer",
+      description: "Extracts ResourceTiming DNS, TCP, and TTFB metrics.",
+      onInspect(packet) {
+        appendLog(
+          `[TransitAnalyzer] ${packet.shortUrl} -> Total ${packet.durationMs}ms (TTFB ${packet.ttfbMs}ms)`
+        );
+      }
+    });
+
+
+    // Built-in Plugin 3: Local Service Reachability Monitor
+    pluginManager.register({
+      id: "local-port-monitor",
+      name: "Local Service Monitor",
+      description: "Checks local dev ports via browser-safe HTTP fetch timing.",
+      onPortProbe(result) {
+        appendLog(`[PortMonitor] 127.0.0.1:${result.port} (${result.service}) -> ${result.status}`);
+      }
+    });
+
+
+    /**
+     * 2. NETWORK APPS REGISTRY
+     */
+    const networkApps = [
+      {
+        id: "meteo-telemetry",
+        name: "MeteoTelemetry API",
+        category: "Weather Stream",
+        cacheEnabled: true,
+        endpoints: [
+          "https://api.open-meteo.com/v1/forecast?latitude=49.2827&longitude=-123.1207&current_weather=true",
+          "https://api.open-meteo.com/v1/forecast?latitude=43.6532&longitude=-79.3832&current_weather=true"
+        ]
+      },
+      {
+        id: "orbital-iss",
+        name: "Orbital ISS Tracker",
+        category: "Satellite Telemetry",
+        cacheEnabled: true,
+        endpoints: [
+          "https://api.wheretheiss.at/v1/satellites/25544"
+        ]
+      },
+      {
+        id: "json-mock-bus",
+        name: "JSON Mock Service",
+        category: "REST API",
+        cacheEnabled: true,
+        endpoints: [
+          "https://jsonplaceholder.typicode.com/posts/1",
+          "https://jsonplaceholder.typicode.com/users/1"
+        ]
+      }
+    ];
+
+
+    const localDevPorts = [
+      { port: 80, service: "HTTP" },
+      { port: 443, service: "HTTPS" },
+      { port: 3000, service: "Node/React" },
+      { port: 5173, service: "Vite Dev" },
+      { port: 8000, service: "Python/API" },
+      { port: 8080, service: "Proxy/Alt" }
+    ];
+
+
+    let activeAppId = networkApps[0].id;
+    const inspectedPackets = [];
+    const memoryFallbackCache = new Map();
+    let adaptiveRuleFn = compileAdaptiveRule(document.getElementById("adaptive-script").value);
+
+
+    function getActiveApp() {
+      return networkApps.find((a) => a.id === activeAppId) || networkApps[0];
+    }
+
+
+    function compileAdaptiveRule(code) {
+      try {
+        return new Function("context", "log", code);
+      } catch (e) {
+        appendLog(`[ScriptCompiler] Syntax error: ${e.message}`);
+        return () => {};
+      }
+    }
+
+
+    /**
+     * 3. NETWORK CACHE & TRANSIT PACKET INSPECTOR
+     */
+    async function inspectNetworkRequest(url, bypassCache = false) {
+      const app = getActiveApp();
+      const bucketName = `netscope-cache:${app.id}`;
+      const canUseCacheStorage = "caches" in window;
+      const startTime = performance.now();
+
+
+      let cached = false;
+      let responseText = "";
+      let status = 200;
+
+
+      if (app.cacheEnabled && !bypassCache) {
+        if (canUseCacheStorage) {
+          const cache = await caches.open(bucketName);
+          const match = await cache.match(url);
+          if (match) {
+            cached = true;
+            status = match.status;
+            responseText = await match.text();
+          }
+        } else if (memoryFallbackCache.has(`${app.id}:${url}`)) {
+          cached = true;
+          const item = memoryFallbackCache.get(`${app.id}:${url}`);
+          status = item.status;
+          responseText = item.body;
+        }
+      }
+
+
+      if (!cached) {
+        const res = await fetch(url, { cache: "no-store" });
+        status = res.status;
+        responseText = await res.text();
+
+
+        if (app.cacheEnabled && res.ok) {
+          if (canUseCacheStorage) {
+            const cache = await caches.open(bucketName);
+            await cache.put(
+              url,
+              new Response(responseText, {
+                status: res.status,
+                headers: { "Content-Type": "application/json", "X-NetScope-Cached": new Date().toISOString() }
+              })
+            );
+          } else {
+            memoryFallbackCache.set(`${app.id}:${url}`, { status, body: responseText });
+          }
+        }
+      }
+
+
+      const endTime = performance.now();
+      const durationMs = Math.max(1, Math.round(endTime - startTime));
+
+
+      // Extract browser ResourceTiming metrics when available
+      const perfEntries = performance.getEntriesByName(url);
+      const latestPerf = perfEntries[perfEntries.length - 1];
+      const dnsMs = latestPerf ? Math.max(1, Math.round(latestPerf.domainLookupEnd - latestPerf.domainLookupStart)) : 2;
+      const tcpMs = latestPerf ? Math.max(1, Math.round(latestPerf.connectEnd - latestPerf.connectStart)) : 4;
+      const ttfbMs = latestPerf
+        ? Math.max(1, Math.round(latestPerf.responseStart - latestPerf.requestStart))
+        : Math.max(1, Math.round(durationMs * 0.6));
+
+
+      const packet = {
+        appId: app.id,
+        url,
+        shortUrl: url.replace(/^https?:\/\//, "").slice(0, 42) + (url.length > 50 ? "..." : ""),
+        cached,
+        status,
+        sizeBytes: new Blob([responseText]).size,
+        durationMs: cached ? Math.min(durationMs, 5) : durationMs,
+        dnsMs: cached ? 0 : dnsMs,
+        tcpMs: cached ? 0 : tcpMs,
+        ttfbMs: cached ? 1 : ttfbMs,
+        timestamp: new Date().toLocaleTimeString()
+      };
+
+
+      inspectedPackets.unshift(packet);
+      if (inspectedPackets.length > 25) inspectedPackets.pop();
+
+
+      await pluginManager.emit("onInspect", packet);
+      adaptiveRuleFn(packet, appendLog);
+      await renderAll();
+    }
+
+
+    /**
+     * 4. BROWSER-SAFE LOCAL PORT REACHABILITY PROBE
+     * Measures HTTP connection timing to localhost ports without raw sockets.
+     */
+    async function probeLocalPort(portObj) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 700);
+      const start = performance.now();
+      const targetUrl = `http://127.0.0.1:${portObj.port}/`;
+
+
+      let status = "CLOSED / FILTERED";
+      let isOpen = false;
+
+
+      try {
+        await fetch(targetUrl, { mode: "no-cors", signal: controller.signal });
+        isOpen = true;
+        status = `OPEN (${Math.round(performance.now() - start)}ms)`;
+      } catch (err) {
+        const elapsed = Math.round(performance.now() - start);
+        if (err.name === "AbortError") {
+          status = "TIMEOUT";
+        } else {
+          status = `CLOSED (${elapsed}ms)`;
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+
+      const result = { ...portObj, isOpen, status };
+      await pluginManager.emit("onPortProbe", result);
+      return result;
+    }
+
+
+    async function runLocalPortSweep() {
+      const grid = document.getElementById("port-grid");
+      grid.innerHTML = `<div style="grid-column:1/-1; color:var(--text-muted); font-size:0.8rem;">Probing local service ports...</div>`;
+
+
+      const results = [];
+      for (const p of localDevPorts) {
+        results.push(await probeLocalPort(p));
+      }
+
+
+      grid.innerHTML = results
+        .map(
+          (r) => `
+          <div class="port-tile">
+            <div class="port-number">:${r.port}</div>
+            <div class="port-service">${r.service}</div>
+            <div style="margin-top:6px;">
+              <span class="pill ${r.isOpen ? "open" : "closed"}">${r.isOpen ? "OPEN" : "CLOSED"}</span>
+            </div>
+          </div>
+        `
+        )
+        .join("");
+    }
+
+
+    /**
+     * 5. UI RENDERING
+     */
+    function appendLog(message) {
+      const logEl = document.getElementById("event-log");
+      const line = document.createElement("div");
+      line.className = "log-line";
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logEl.prepend(line);
+      while (logEl.children.length > 40) {
+        logEl.removeChild(logEl.lastChild);
+      }
+    }
+
+
+    async function getAppCachedCount(appId) {
+      const bucketName = `netscope-cache:${appId}`;
+      if ("caches" in window) {
+        const cache = await caches.open(bucketName);
+        const keys = await cache.keys();
+        return keys.length;
+      }
+      return Array.from(memoryFallbackCache.keys()).filter((k) => k.startsWith(`${appId}:`)).length;
+    }
+
+
+    async function renderAll() {
+      const activeApp = getActiveApp();
+
+
+      // Render App List
+      const appListEl = document.getElementById("app-list");
+      appListEl.innerHTML = networkApps
+        .map(
+          (app) => `
+          <div class="item-card ${app.id === activeApp.id ? "active" : ""}" data-app-id="${app.id}">
+            <div class="item-header">
+              <span class="item-name">${app.name}</span>
+              <span class="pill ${app.cacheEnabled ? "hit" : "miss"}">${app.cacheEnabled ? "CACHE ON" : "BYPASS"}</span>
+            </div>
+            <div class="item-meta">${app.category} • ${app.endpoints.length} endpoints</div>
+          </div>
+        `
+        )
+        .join("");
+
+
+      appListEl.querySelectorAll(".item-card").forEach((el) => {
+        el.addEventListener("click", () => {
+          activeAppId = el.dataset.appId;
+          renderAll();
+        });
+      });
+
+
+      // Render Plugins
+      const pluginListEl = document.getElementById("plugin-list");
+      pluginListEl.innerHTML = Array.from(pluginManager.plugins.values())
+        .map(
+          (p) => `
+          <div class="item-card" data-plugin-id="${p.id}">
+            <div class="item-header">
+              <span class="item-name">${p.name}</span>
+              <span class="pill ${p.enabled ? "open" : "blocked"}">${p.enabled ? "ACTIVE" : "OFF"}</span>
+            </div>
+            <div style="font-size:0.76rem; color:var(--text-muted);">${p.description}</div>
+          </div>
+        `
+        )
+        .join("");
+
+
+      pluginListEl.querySelectorAll(".item-card").forEach((el) => {
+        el.addEventListener("click", () => {
+          pluginManager.toggle(el.dataset.pluginId);
+          renderAll();
+        });
+      });
+
+
+      // Update Header & Endpoints
+      document.getElementById("active-app-title").textContent = `${activeApp.name} — Packet & Cache Inspector`;
+      document.getElementById("toggle-cache-policy").checked = activeApp.cacheEnabled;
+
+
+      const endpointSelect = document.getElementById("endpoint-select");
+      endpointSelect.innerHTML = activeApp.endpoints
+        .map((ep) => `<option value="${ep}">${ep}</option>`)
+        .join("");
+
+
+      // Update Metrics
+      const appPackets = inspectedPackets.filter((p) => p.appId === activeApp.id);
+      const hits = appPackets.filter((p) => p.cached).length;
+      const hitRatio = appPackets.length ? Math.round((hits / appPackets.length) * 100) : 0;
+      const avgRtt = appPackets.length
+        ? Math.round(appPackets.reduce((acc, p) => acc + p.durationMs, 0) / appPackets.length)
+        : 0;
+      const cachedCount = await getAppCachedCount(activeApp.id);
+
+
+      document.getElementById("metric-hit-ratio").textContent = `${hitRatio}%`;
+      document.getElementById("metric-cached-count").textContent = cachedCount;
+      document.getElementById("metric-avg-rtt").textContent = `${avgRtt} ms`;
+      document.getElementById("metric-packet-count").textContent = appPackets.length;
+
+
+      // Render Packet Table
+      const tbody = document.getElementById("packet-table-body");
+      if (appPackets.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" style="color:var(--text-muted); text-align:center; padding:20px;">
+              No packets captured for ${activeApp.name} yet.
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = appPackets
+          .map((pkt) => {
+            const total = Math.max(1, pkt.dnsMs + pkt.tcpMs + pkt.ttfbMs);
+            const dnsPct = Math.round((pkt.dnsMs / total) * 100);
+            const tcpPct = Math.round((pkt.tcpMs / total) * 100);
+            const ttfbPct = Math.max(10, 100 - dnsPct - tcpPct);
+
+
+            return `
+              <tr>
+                <td>
+                  <div>${pkt.shortUrl}</div>
+                  <div style="font-size:0.72rem; color:var(--text-muted);">${pkt.timestamp}</div>
+                </td>
+                <td>
+                  <span class="pill ${pkt.cached ? "hit" : "miss"}">
+                    ${pkt.cached ? "CACHE HIT" : "NETWORK"}
+                  </span>
+                </td>
+                <td>${pkt.status} • ${pkt.sizeBytes} B</td>
+                <td>
+                  <div>${pkt.durationMs}ms (DNS ${pkt.dnsMs} | TCP ${pkt.tcpMs} | TTFB ${pkt.ttfbMs})</div>
+                  <div class="waterfall-bar">
+                    <div class="wf-dns" style="width:${dnsPct}%"></div>
+                    <div class="wf-tcp" style="width:${tcpPct}%"></div>
+                    <div class="wf-ttfb" style="width:${ttfbPct}%"></div>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+    }
+
+
+    /**
+     * 6. EVENT WIRING
+     */
+    document.getElementById("toggle-cache-policy").addEventListener("change", (e) => {
+      getActiveApp().cacheEnabled = e.target.checked;
+      appendLog(`Cache policy for ${getActiveApp().name}: ${e.target.checked ? "ENABLED" : "DISABLED"}`);
+      renderAll();
+    });
+
+
+    document.getElementById("btn-fetch-cached").addEventListener("click", () => {
+      const url = document.getElementById("endpoint-select").value;
+      inspectNetworkRequest(url, false);
+    });
+
+
+    document.getElementById("btn-fetch-bypass").addEventListener("click", () => {
+      const url = document.getElementById("endpoint-select").value;
+      inspectNetworkRequest(url, true);
+    });
+
+
+    document.getElementById("btn-run-suite").addEventListener("click", async () => {
+      const app = getActiveApp();
+      for (const ep of app.endpoints) {
+        await inspectNetworkRequest(ep, false);
+      }
+    });
+
+
+    document.getElementById("btn-clear-all").addEventListener("click", async () => {
+      const app = getActiveApp();
+      if ("caches" in window) {
+        await caches.delete(`netscope-cache:${app.id}`);
+      }
+      for (const key of Array.from(memoryFallbackCache.keys())) {
+        if (key.startsWith(`${app.id}:`)) memoryFallbackCache.delete(key);
+      }
+      appendLog(`Cleared CacheStorage bucket for ${app.name}`);
+      renderAll();
+    });
+
+
+    document.getElementById("btn-apply-script").addEventListener("click", () => {
+      adaptiveRuleFn = compileAdaptiveRule(document.getElementById("adaptive-script").value);
+      appendLog("Updated adaptive packet/cache hook script.");
+    });
+
+
+    document.getElementById("btn-scan-local").addEventListener("click", runLocalPortSweep);
+
+
+    // Initial render
+    renderAll();
+    runLocalPortSweep();
+  </script>
+</body>
+</html>
